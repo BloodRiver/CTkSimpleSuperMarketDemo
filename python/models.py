@@ -370,10 +370,6 @@ class Item(BaseModel):
         
     def __repr__(self) -> str:
         return str(self)
-        
-
-if __name__ == "__main__":
-    print(Item.load_all())
 
 
 class ShoppingCartItem:
@@ -499,7 +495,6 @@ class Order(BaseModel):
         date_completed: str
         
         rows = fetch_all_query("SELECT DISTINCT `order`.`date_ordered`, `user`.`id`, `order`.`date_completed` FROM `order`, `user` WHERE `order`.`user_id` = `user`.`id` AND `order`.`date_completed` IS NULL;")
-        print("pending_order_rows:", rows)
         
         for each_row in rows:
             new_order = Order()
@@ -511,10 +506,9 @@ class Order(BaseModel):
             pending_orders.append(new_order)
             
         pending_orders = sorted(pending_orders, key=lambda x: x.__date_ordered, reverse=True)
-        print("pending_orders:", pending_orders)
             
         rows = fetch_all_query("SELECT DISTINCT `order`.`date_ordered`, `user`.`id`, `order`.`date_completed` FROM `order`, `user` WHERE `order`.`user_id` = `user`.`id` AND `order`.`date_completed` NOT NULL;")
-        print("completed_order_rows:", rows)
+
         for each_row in rows:
             new_order = Order()
             date_ordered, new_order.__user_id, date_completed = each_row
@@ -525,14 +519,12 @@ class Order(BaseModel):
             completed_orders.append(new_order)
         
         completed_orders = sorted(completed_orders, key=lambda x: x.__date_ordered, reverse=True)
-        print("completed_orders:", completed_orders)
         orders = list(pending_orders) + list(completed_orders)
             
         return orders
     
     def get_orders(date_ordered: date, ordered_by: User, pending: bool) -> list['Order']:
         query = f"SELECT * FROM `order` WHERE `order`.`date_ordered` = \"{date_ordered}\" AND `order`.`user_id` = {ordered_by.get_id()} AND `order`.`date_completed` {'IS' if pending else 'NOT'} NULL;"
-        print("query:", query)
         rows = fetch_all_query(query)
         
         dateOrdered: str

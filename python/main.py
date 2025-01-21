@@ -6,14 +6,7 @@ import os
 from pathlib import Path
 from validators import check_email_format, check_password_format
 import functools
-
-ADMIN_USER = models.User("Admin", "admin@system.com")
-ADMIN_USER.set_password("Admin@1234")
-ADMIN_USER.is_admin = True
-try:
-    ADMIN_USER.save_new()
-except models.sql.IntegrityError:
-    pass
+import webbrowser
 
 
 '''
@@ -645,6 +638,13 @@ class AdminViewPendingOrdersScreen(ctk.CTkFrame):
             date_completed_label.grid(row=self.__table_frame_num_rows, column=2)
 
             self.__table_frame_num_rows += 1
+            
+        go_back_button = ctk.CTkButton(self, text="Go Back", command=self.__go_back_button_on_click)
+        go_back_button.pack(anchor=ctk.W, padx=20)
+        
+    def __go_back_button_on_click(self):
+        next_screen = self.master.show_screen("admin")
+        next_screen.initialize(user=self.__user)
         
     def initialize(self, user: models.User):
         self.__user = user
@@ -672,7 +672,6 @@ class AdminViewOrderDetailsScreen(ctk.CTkFrame):
         
         
     def initialize(self, user: models.User, orders: list[models.Order]):
-        print("initialize orders:", orders)
         self.__user = user
         self.__orders = orders
         
@@ -963,7 +962,6 @@ class CustomerBrowseItemsScreen(ctk.CTkFrame):
                 each_item.set_selected(False)
                 each_item.set_items_to_purchase(0)
         self.__view_cart_button.configure(text=f"View Cart ({self.__shopping_cart.count_items()})")
-        print(self.__shopping_cart)
     
     def __select_all(self):
         for each_row in self.__table_rows:
@@ -1099,7 +1097,6 @@ class CustomerViewCartScreen(ctk.CTkFrame):
             new_order.save_new()
         else:
             msg.showinfo("Success", "Your Order has successfully been placed!")
-            print(self.__shopping_cart)
     
     def __remove_selected_from_cart(self):
         i = 0
@@ -1115,7 +1112,6 @@ class CustomerViewCartScreen(ctk.CTkFrame):
         
         self.__select_all_checkbox.deselect()
         self.__overall_price_label.configure(text=f"Total Price: {self.__shopping_cart.calculate_overall_total()}")
-        print(self.__shopping_cart)
         
         
     def initialize(self, user: models.User, shopping_cart: models.ShoppingCart):
@@ -1193,9 +1189,20 @@ class MainWindow(ctk.CTk):
         new_screen = new_screen_class(self)
         
         # Place the screen in the main window
-        new_screen.pack(anchor=ctk.NW, fill=ctk.BOTH, expand=True)
+        new_screen.pack(side=ctk.TOP, anchor=ctk.NW, fill=ctk.BOTH, expand=True)
+        
+        footer_frame = ctk.CTkFrame(self, fg_color=ctk.ThemeManager.theme['CTkButton']['fg_color'], bg_color=ctk.ThemeManager.theme['CTkButton']['fg_color'], cursor="hand2")
+        footer_frame.pack(side=ctk.BOTTOM, anchor=ctk.W, fill=ctk.X)
+        footer_frame.bind("<Button-1>", self.__open_github)
+        
+        footer_label = ctk.CTkLabel(footer_frame, text_color=ctk.ThemeManager.theme['CTkLabel']['text_color'], text="Made by Sajeed Ahmed Galib Arnob")
+        footer_label.pack(side=ctk.TOP, anchor=ctk.CENTER)
+        footer_label.bind("<Button-1>", self.__open_github)
         
         return new_screen
+    
+    def __open_github(self, event):
+        webbrowser.open("https://github.com/BloodRiver")
 
 
 if __name__ == "__main__":
@@ -1205,6 +1212,14 @@ if __name__ == "__main__":
     ctk.set_default_color_theme("blue")
     
     models.create_tables()
+    
+    ADMIN_USER = models.User("Admin", "admin@system.com")
+    ADMIN_USER.set_password("Admin@1234")
+    ADMIN_USER.is_admin = True
+    try:
+        ADMIN_USER.save_new()
+    except models.sql.IntegrityError:
+        pass
 
     main_window = MainWindow()
 
